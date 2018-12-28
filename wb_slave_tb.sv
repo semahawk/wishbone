@@ -11,7 +11,9 @@ module wb_slave_tb ();
     reg we_o;
     reg cyc_o;
 
-    wb_slave slave (
+    reg [`DATA_WIDTH-1:0] read_data;
+
+    wb_slave slave_tb (
         .rst_i(rst_i),
         .clk_i(clk_i),
         .adr_i(adr_o),
@@ -23,12 +25,41 @@ module wb_slave_tb ();
         .stb_i(stb_o)
     );
 
+    task single_read;
+        input  [`ADDR_WIDTH-1:0] addr;
+        output [`DATA_WIDTH-1:0] data;
+
+        $display("%g: Single Read (addr: %x)", $time, addr);
+
+        #1;
+
+        adr_o = addr;
+        we_o = 1'h0;
+        cyc_o = 1'h1;
+        stb_o = 1'h1;
+
+        while (ack_i != 1'h1) begin
+            #1;
+        end
+
+        data = dat_i;
+
+        $display("%g: -> Received data: %x", $time, dat_i);
+
+        stb_o = 1'h0;
+        cyc_o = 1'h0;
+
+        #1;
+    endtask
+
     initial begin
         $dumpfile(`WAVE_FILE);
-        $dumpvars(0, slave);
+        $dumpvars(0, slave_tb);
 
         clk_i = 0;
-        #100;
+
+        single_read(8'h00, read_data);
+
         $finish;
     end
 

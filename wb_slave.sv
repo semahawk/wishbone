@@ -1,5 +1,11 @@
 `include "parameters.sv"
 
+typedef enum {
+    STATE_IDLE,
+    STATE_PROCESS,
+    STATE_WAIT_FOR_PHASE_END
+} state_t;
+
 module wb_slave (
     input wire rst_i,
     input wire clk_i,
@@ -12,6 +18,34 @@ module wb_slave (
     input wire cyc_i
 );
 
-    // TODO
+    reg [`DATA_WIDTH-1:0] data = 8'h0;
+    reg [`ADDR_WIDTH-1:0] addr;
+    reg ack = 1'h0;
+    state_t state = STATE_IDLE;
+
+    always @(posedge clk_i) begin
+        case (state)
+            STATE_IDLE: begin
+                if ((cyc_i) && (stb_i)) begin
+                    state <= STATE_PROCESS;
+                    addr <= adr_i;
+                end
+            end
+            STATE_PROCESS: begin
+                state <= STATE_WAIT_FOR_PHASE_END;
+                data <= ~addr;
+                ack <= 1'h1;
+            end
+            STATE_WAIT_FOR_PHASE_END: begin
+                if (~stb_i) begin
+                    state <= STATE_IDLE;
+                    ack <= 1'h0;
+                end
+            end
+        endcase
+    end
+
+    assign ack_o = stb_i ? ack : 1'h0;
+    assign dat_o = data;
   
 endmodule
