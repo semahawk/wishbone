@@ -1,6 +1,6 @@
 `include "parameters.sv"
 
-module wb_slave_tb ();
+module wb_slave_register_tb ();
     reg rst_i;
     reg clk_i;
     reg ack_i;
@@ -13,7 +13,7 @@ module wb_slave_tb ();
 
     reg [`DATA_WIDTH-1:0] read_data;
 
-    wb_slave slave_tb (
+    wb_slave_register slave_tb (
         .rst_i(rst_i),
         .clk_i(clk_i),
         .adr_i(adr_o),
