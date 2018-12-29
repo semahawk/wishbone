@@ -11,6 +11,6 @@
 // <write data> and <expected output> are both `DATA_WIDTH long (parameters.sv)
 //
 
-0_00_xx_00
-1_00_73_xx
-0_00_xx_73
+0_0000_xxxxxxxx_00000000
+1_0000_13371337_xxxxxxxx
+0_0000_xxxxxxxx_13371337

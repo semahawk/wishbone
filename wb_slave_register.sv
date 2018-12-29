@@ -18,9 +18,9 @@ module wb_slave_register (
     input wire cyc_i
 );
 
-    reg [`DATA_WIDTH-1:0] register_value = 8'h0;
-    reg [`DATA_WIDTH-1:0] input_data = 8'h0;
-    reg [`DATA_WIDTH-1:0] output_data = 8'h0;
+    reg [`DATA_WIDTH-1:0] register_value = {`DATA_WIDTH{1'h0}};
+    reg [`DATA_WIDTH-1:0] input_data = {`DATA_WIDTH{1'h0}};
+    reg [`DATA_WIDTH-1:0] output_data = {`DATA_WIDTH{1'h0}};
     reg [`ADDR_WIDTH-1:0] addr;
     reg ack = 1'h0;
     state_t state = STATE_IDLE;
