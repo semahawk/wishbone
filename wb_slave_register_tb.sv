@@ -1,5 +1,8 @@
 `include "parameters.sv"
 
+`define OP_CLASSIC_SINGLE_READ  0
+`define OP_CLASSIC_SINGLE_WRITE 1
+
 module wb_slave_register_tb ();
     reg rst_i;
     reg clk_i;
@@ -12,6 +15,14 @@ module wb_slave_register_tb ();
     reg cyc_o;
 
     reg [`DATA_WIDTH-1:0] read_data;
+
+    reg [4 + `ADDR_WIDTH + `DATA_WIDTH * 2 - 1:0] testvector [31:0];
+    reg [3:0] tv_op;
+    reg [`ADDR_WIDTH-1:0] tv_addr;
+    reg [`DATA_WIDTH-1:0] tv_write_data;
+    reg [`DATA_WIDTH-1:0] tv_expected_data;
+    int current_test_num = 0;
+    int errors = 0;
 
     wb_slave_register slave_tb (
         .rst_i(rst_i),
@@ -29,9 +40,10 @@ module wb_slave_register_tb ();
         input  [`ADDR_WIDTH-1:0] addr;
         output [`DATA_WIDTH-1:0] data;
 
-        $display("%g: Single Read (addr: %x)", $time, addr);
-
         #1;
+
+        $display(".. %03g: Starting a cycle (adr_o -> 0x%x, we_o -> 0, cyc_o -> 1, stb_o -> 1)",
+            $time, addr);
 
         adr_o = addr;
         we_o = 1'h0;
@@ -39,12 +51,14 @@ module wb_slave_register_tb ();
         stb_o = 1'h1;
 
         while (ack_i != 1'h1) begin
+            $display(".. %03g: Waiting for ACK...", $time);
             #1;
         end
 
         data = dat_i;
 
-        $display("%g: -> Received data: %x", $time, dat_i);
+        $display(".. %03g: Received data: 0x%x", $time, data);
+        $display(".. %03g: Ending cycle (cyc_o -> 0, stb_o -> 0)", $time);
 
         stb_o = 1'h0;
         cyc_o = 1'h0;
@@ -56,9 +70,10 @@ module wb_slave_register_tb ();
         input [`ADDR_WIDTH-1:0] addr;
         input [`DATA_WIDTH-1:0] data;
 
-        $display("%g: Single Write (addr: %x, data: %x)", $time, addr, data);
-
         #1;
+
+        $display(".. %03g: Starting a cycle (adr_o -> 0x%x, dat_o -> 0x%x, we_o -> 0, cyc_o -> 1, stb_o -> 1)",
+            $time, addr, data);
 
         adr_o = addr;
         dat_o = data;
@@ -67,10 +82,11 @@ module wb_slave_register_tb ();
         stb_o = 1'h1;
 
         while (ack_i != 1'h1) begin
+            $display(".. %03g: Waiting for ACK...", $time);
             #1;
         end
 
-        $display("%g: -> Done", $time);
+        $display(".. %03g: Ending cycle (cyc_o -> 0, stb_o -> 0, we_o -> 0)", $time);
 
         stb_o = 1'h0;
         cyc_o = 1'h0;
@@ -83,6 +99,8 @@ module wb_slave_register_tb ();
         $dumpfile(`WAVE_FILE);
         $dumpvars(0, slave_tb);
 
+        $readmemh("wb_slave_register_testvector.tv", testvector);
+
         clk_i = 0;
         cyc_o = 0;
         stb_o = 0;
@@ -90,13 +108,51 @@ module wb_slave_register_tb ();
         adr_o = 0;
         dat_o = 0;
 
-        single_read(8'h00, read_data);
-        single_write(8'h00, 8'h73);
-        single_read(8'h00, read_data);
+        for (int i = 0; i < 32; i++) begin
+            { tv_op, tv_addr, tv_write_data, tv_expected_data } = testvector[i];
 
-        #4;
+            if (tv_op === 4'hx) begin
+                $display("");
+                $display("Completed %1d tests, %1d failed, %.2f%% success ratio",
+                    current_test_num, errors, (current_test_num - errors) * 100 / current_test_num);
+                $finish;
+            end
 
-        $finish;
+            current_test_num = current_test_num + 1;
+
+            case (tv_op)
+                `OP_CLASSIC_SINGLE_READ: begin
+                    $display("## Test %1d: Classic Single Read", current_test_num);
+                    $display("-- Address: 0x%x", tv_addr);
+                    $display("-- Expected output data: 0x%x", tv_expected_data);
+
+                    single_read(tv_addr, read_data);
+
+                    if (tv_expected_data == read_data) begin
+                        $display("## Test %1d: OK", current_test_num);
+                    end else begin
+                        if (tv_expected_data != read_data)
+                            $display("!! Mismatch!");
+                            $display("!! Expected 0x%x, got 0x%x (xor: 0x%x)",
+                                tv_expected_data, read_data, tv_expected_data ^ read_data);
+                            $display("!! NOK!");
+                            errors = errors + 1;
+                    end
+                end
+                `OP_CLASSIC_SINGLE_WRITE: begin
+                    $display("## Test %1d: Classic Single Write", current_test_num);
+                    $display("-- Address: 0x%x", tv_addr);
+
+                    single_write(tv_addr, tv_write_data);
+
+                    $display("## Test %1d: OK", current_test_num);
+                end
+                default: begin
+                    $error("# test %2d: Unknown op: %x",
+                        current_test_num, tv_op);
+                end
+            endcase
+        end
     end
 
     always begin
