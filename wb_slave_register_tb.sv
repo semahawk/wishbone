@@ -49,7 +49,34 @@ module wb_slave_register_tb ();
         stb_o = 1'h0;
         cyc_o = 1'h0;
 
+        #2;
+    endtask
+
+    task single_write;
+        input [`ADDR_WIDTH-1:0] addr;
+        input [`DATA_WIDTH-1:0] data;
+
+        $display("%g: Single Write (addr: %x, data: %x)", $time, addr, data);
+
         #1;
+
+        adr_o = addr;
+        dat_o = data;
+        we_o = 1'h1;
+        cyc_o = 1'h1;
+        stb_o = 1'h1;
+
+        while (ack_i != 1'h1) begin
+            #1;
+        end
+
+        $display("%g: -> Done", $time);
+
+        stb_o = 1'h0;
+        cyc_o = 1'h0;
+        we_o = 1'h0;
+
+        #2;
     endtask
 
     initial begin
@@ -57,8 +84,17 @@ module wb_slave_register_tb ();
         $dumpvars(0, slave_tb);
 
         clk_i = 0;
+        cyc_o = 0;
+        stb_o = 0;
+        we_o = 0;
+        adr_o = 0;
+        dat_o = 0;
 
         single_read(8'h00, read_data);
+        single_write(8'h00, 8'h73);
+        single_read(8'h00, read_data);
+
+        #4;
 
         $finish;
     end

@@ -19,6 +19,7 @@ module wb_slave_register (
 );
 
     reg [`DATA_WIDTH-1:0] register_value = 8'h0;
+    reg [`DATA_WIDTH-1:0] input_data = 8'h0;
     reg [`DATA_WIDTH-1:0] output_data = 8'h0;
     reg [`ADDR_WIDTH-1:0] addr;
     reg ack = 1'h0;
@@ -30,11 +31,21 @@ module wb_slave_register (
                 if ((cyc_i) && (stb_i)) begin
                     state <= STATE_PROCESS;
                     addr <= adr_i;
+
+                    if (we_i) begin
+                        input_data <= dat_i;
+                    end
                 end
             end
             STATE_PROCESS: begin
                 state <= STATE_WAIT_FOR_PHASE_END;
-                output_data <= register_value;
+
+                if (we_i) begin
+                    register_value <= input_data;
+                end else begin
+                    output_data <= register_value;
+                end
+
                 ack <= 1'h1;
             end
             STATE_WAIT_FOR_PHASE_END: begin

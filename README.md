@@ -14,3 +14,7 @@ here's what's actually implemented here:
 #### single read
 
 ![single read](one_single_read.png)
+
+#### single write
+
+![single write](one_single_write.png)
