@@ -11,13 +11,15 @@ module wb_slave_register_tb ();
     reg [`ADDR_WIDTH-1:0] adr_o;
     reg [`DATA_WIDTH-1:0] dat_i;
     reg [`DATA_WIDTH-1:0] dat_o;
+    reg [7:0] sel_o;
     reg we_o;
     reg cyc_o;
 
     reg [`DATA_WIDTH-1:0] read_data;
 
-    reg [4 + `ADDR_WIDTH + `DATA_WIDTH * 2 - 1:0] testvector [31:0];
+    reg [4+8+`ADDR_WIDTH+`DATA_WIDTH*2-1:0] testvector [31:0];
     reg [3:0] tv_op;
+    reg [7:0] tv_sel;
     reg [`ADDR_WIDTH-1:0] tv_addr;
     reg [`DATA_WIDTH-1:0] tv_write_data;
     reg [`DATA_WIDTH-1:0] tv_expected_data;
@@ -33,19 +35,22 @@ module wb_slave_register_tb ();
         .we_i(we_o),
         .cyc_i(cyc_o),
         .ack_o(ack_i),
-        .stb_i(stb_o)
+        .stb_i(stb_o),
+        .sel_i(sel_o)
     );
 
     task single_read;
         input  [`ADDR_WIDTH-1:0] addr;
+        input  [7:0] selection;
         output [`DATA_WIDTH-1:0] data;
 
         #1;
 
-        $display(".. %03g: Starting a cycle (adr_o -> 0x%x, we_o -> 0, cyc_o -> 1, stb_o -> 1)",
-            $time, addr);
+        $display(".. %03g: Starting a cycle (adr_o -> 0x%x, sel_o -> 0x%x, we_o -> 0, cyc_o -> 1, stb_o -> 1)",
+            $time, addr, selection);
 
         adr_o = addr;
+        sel_o = selection;
         we_o = 1'h0;
         cyc_o = 1'h1;
         stb_o = 1'h1;
@@ -68,14 +73,16 @@ module wb_slave_register_tb ();
 
     task single_write;
         input [`ADDR_WIDTH-1:0] addr;
+        input [7:0] selection;
         input [`DATA_WIDTH-1:0] data;
 
         #1;
 
-        $display(".. %03g: Starting a cycle (adr_o -> 0x%x, dat_o -> 0x%x, we_o -> 0, cyc_o -> 1, stb_o -> 1)",
-            $time, addr, data);
+        $display(".. %03g: Starting a cycle (adr_o -> 0x%x, sel_o -> 0x%x, dat_o -> 0x%x, we_o -> 0, cyc_o -> 1, stb_o -> 1)",
+            $time, addr, selection, data);
 
         adr_o = addr;
+        sel_o = selection;
         dat_o = data;
         we_o = 1'h1;
         cyc_o = 1'h1;
@@ -109,7 +116,7 @@ module wb_slave_register_tb ();
         dat_o = 0;
 
         for (int i = 0; i < 32; i++) begin
-            { tv_op, tv_addr, tv_write_data, tv_expected_data } = testvector[i];
+            { tv_op, tv_sel, tv_addr, tv_write_data, tv_expected_data } = testvector[i];
 
             if (tv_op === 4'hx) begin
                 $display("");
@@ -124,9 +131,10 @@ module wb_slave_register_tb ();
                 `OP_CLASSIC_SINGLE_READ: begin
                     $display("## Test %1d: Classic Single Read", current_test_num);
                     $display("-- Address: 0x%x", tv_addr);
+                    $display("-- Selection: 0x%x", tv_sel);
                     $display("-- Expected output data: 0x%x", tv_expected_data);
 
-                    single_read(tv_addr, read_data);
+                    single_read(tv_addr, tv_sel, read_data);
 
                     if (tv_expected_data == read_data) begin
                         $display("## Test %1d: OK", current_test_num);
@@ -142,14 +150,17 @@ module wb_slave_register_tb ();
                 `OP_CLASSIC_SINGLE_WRITE: begin
                     $display("## Test %1d: Classic Single Write", current_test_num);
                     $display("-- Address: 0x%x", tv_addr);
+                    $display("-- Selection: 0x%x", tv_sel);
 
-                    single_write(tv_addr, tv_write_data);
+                    single_write(tv_addr, tv_sel, tv_write_data);
 
                     $display("## Test %1d: OK", current_test_num);
                 end
                 default: begin
                     $error("# test %2d: Unknown op: %x",
                         current_test_num, tv_op);
+
+                    errors = errors + 1;
                 end
             endcase
         end
