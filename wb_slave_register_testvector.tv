@@ -10,8 +10,8 @@
 // <sel> indicates where valid data is placed (each bit specifiec which byte is valid)
 // and is always 8 bits long
 //
-// <addr> is `ADDR_WIDTH long (parameters.sv)
-// <write data> and <expected output> are both `DATA_WIDTH long (parameters.sv)
+// <addr> is ADDR_WIDTH long (parameter to wb_slave_register)
+// <write data> and <expected output> are both DATA_WIDTH (parameter to wb_slave_register)
 //
 
 // check that it's all zeroes initially
