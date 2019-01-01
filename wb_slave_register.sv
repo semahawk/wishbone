@@ -1,3 +1,5 @@
+`default_nettype none
+
 typedef enum {
     STATE_IDLE,
     STATE_PROCESS,
