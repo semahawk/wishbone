@@ -2,6 +2,11 @@
 `define OP_CLASSIC_SINGLE_WRITE 1
 `define OP_READ_MODIFY_WRITE    2
 
+typedef enum {
+    RETURN_ACK,
+    RETURN_ERR
+} ret_t;
+
 module wb_slave_register_tb ();
     localparam ADDR_WIDTH = 16;
     localparam DATA_WIDTH = 32;
@@ -11,6 +16,7 @@ module wb_slave_register_tb ();
     reg rst_o;
     reg clk_i;
     reg ack_i;
+    reg err_i;
     reg stb_o;
     reg [ADDR_WIDTH-1:0] adr_o;
     reg [DATA_WIDTH-1:0] dat_i;
@@ -20,13 +26,15 @@ module wb_slave_register_tb ();
     reg cyc_o;
 
     reg [DATA_WIDTH-1:0] read_data;
+    reg [3:0] return_type;
 
-    reg [4+SEL_WIDTH+ADDR_WIDTH+DATA_WIDTH*2-1:0] testvector [31:0];
+    reg [4+SEL_WIDTH+ADDR_WIDTH+DATA_WIDTH*2+4-1:0] testvector [31:0];
     reg [3:0] tv_op;
     reg [SEL_WIDTH-1:0] tv_sel;
     reg [ADDR_WIDTH-1:0] tv_addr;
     reg [DATA_WIDTH-1:0] tv_write_data;
     reg [DATA_WIDTH-1:0] tv_expected_data;
+    reg [3:0] tv_return_type;
     int current_test_num = 0;
     int errors = 0;
 
@@ -43,6 +51,7 @@ module wb_slave_register_tb ();
         .we_i(we_o),
         .cyc_i(cyc_o),
         .ack_o(ack_i),
+        .err_o(err_i),
         .stb_i(stb_o),
         .sel_i(sel_o)
     );
@@ -51,6 +60,7 @@ module wb_slave_register_tb ();
         input  [ADDR_WIDTH-1:0] addr;
         input  [7:0] selection;
         output [DATA_WIDTH-1:0] data;
+        output [3:0] return_type;
 
         #1;
 
@@ -63,14 +73,21 @@ module wb_slave_register_tb ();
         cyc_o = 1'h1;
         stb_o = 1'h1;
 
-        while (ack_i != 1'h1) begin
-            $display(".. %03g: Waiting for ACK...", $time);
+        while (ack_i != 1'h1 && err_i != 1'h1) begin
+            $display(".. %03g: Waiting for ACK or ERR...", $time);
             #1;
         end
 
-        data = dat_i;
+        if (err_i == 1'h1) begin
+            $display(".. %03g: Got ERR", $time);
+            return_type = RETURN_ERR;
+        end else if (ack_i == 1'h1) begin
+            $display(".. %03g: Got ACK", $time);
+            data = dat_i;
+            $display(".. %03g: Received data: 0x%x", $time, data);
+            return_type = RETURN_ACK;
+        end
 
-        $display(".. %03g: Received data: 0x%x", $time, data);
         $display(".. %03g: Ending cycle (cyc_o -> 0, stb_o -> 0)", $time);
 
         stb_o = 1'h0;
@@ -83,6 +100,7 @@ module wb_slave_register_tb ();
         input [ADDR_WIDTH-1:0] addr;
         input [7:0] selection;
         input [DATA_WIDTH-1:0] data;
+        output [3:0] return_type;
 
         #1;
 
@@ -96,9 +114,17 @@ module wb_slave_register_tb ();
         cyc_o = 1'h1;
         stb_o = 1'h1;
 
-        while (ack_i != 1'h1) begin
-            $display(".. %03g: Waiting for ACK...", $time);
+        while (ack_i != 1'h1 && err_i != 1'h1) begin
+            $display(".. %03g: Waiting for ACK or ERR...", $time);
             #1;
+        end
+
+        if (err_i == 1'h1) begin
+            $display(".. %03g: Got ERR", $time);
+            return_type = RETURN_ERR;
+        end else if (ack_i == 1'h1) begin
+            $display(".. %03g: Got ACK", $time);
+            return_type = RETURN_ACK;
         end
 
         $display(".. %03g: Ending cycle (cyc_o -> 0, stb_o -> 0, we_o -> 0)", $time);
@@ -115,6 +141,7 @@ module wb_slave_register_tb ();
         input  [7:0] selection;
         input  [DATA_WIDTH-1:0] write_data;
         output [DATA_WIDTH-1:0] read_data;
+        output [3:0] return_type;
 
         #1;
 
@@ -128,10 +155,20 @@ module wb_slave_register_tb ();
         cyc_o = 1'h1;
         stb_o = 1'h1;
 
-        while (ack_i != 1'h1) begin
-            $display(".. %03g: Waiting for ACK...", $time);
+        while (ack_i != 1'h1 && err_i != 1'h1) begin
+            $display(".. %03g: Waiting for ACK or ERR...", $time);
             #1;
         end
+
+        if (err_i == 1'h1) begin
+            $display(".. %03g: Got ERR", $time);
+            return_type = RETURN_ERR;
+        end else if (ack_i == 1'h1) begin
+            $display(".. %03g: Got ACK", $time);
+            return_type = RETURN_ACK;
+        end
+
+        #1;
 
         read_data = dat_i;
 
@@ -182,7 +219,7 @@ module wb_slave_register_tb ();
         rst_o = 0;
 
         for (int i = 0; i < 32; i++) begin
-            { tv_op, tv_sel, tv_addr, tv_write_data, tv_expected_data } = testvector[i];
+            { tv_op, tv_sel, tv_addr, tv_write_data, tv_expected_data, tv_return_type } = testvector[i];
 
             if (tv_op === 4'hx) begin
                 $display("");
@@ -200,17 +237,22 @@ module wb_slave_register_tb ();
                     $display("-- Selection: 0x%x", tv_sel);
                     $display("-- Expected output data: 0x%x", tv_expected_data);
 
-                    single_read(tv_addr, tv_sel, read_data);
+                    single_read(tv_addr, tv_sel, read_data, return_type);
 
-                    if (tv_expected_data == read_data) begin
-                        $display("## Test %1d: OK", current_test_num);
+                    if (tv_expected_data != read_data) begin
+                        $display("!! Mismatch!");
+                        $display("!! Expected 0x%x, got 0x%x (xor: 0x%x)",
+                            tv_expected_data, read_data, tv_expected_data ^ read_data);
+                        $display("!! NOK!");
+                        errors = errors + 1;
+                    end else if (tv_return_type != return_type) begin
+                        $display("!! Mismatch!");
+                        $display("!! Expected return with %1d, got %1d", tv_return_type, return_type);
+                        $display("!! (ACK is %1d, ERR is %1d)", RETURN_ACK, RETURN_ERR);
+                        $display("!! NOK!");
+                        errors = errors + 1;
                     end else begin
-                        if (tv_expected_data != read_data)
-                            $display("!! Mismatch!");
-                            $display("!! Expected 0x%x, got 0x%x (xor: 0x%x)",
-                                tv_expected_data, read_data, tv_expected_data ^ read_data);
-                            $display("!! NOK!");
-                            errors = errors + 1;
+                        $display("## Test %1d: OK", current_test_num);
                     end
                 end
                 `OP_CLASSIC_SINGLE_WRITE: begin
@@ -219,9 +261,17 @@ module wb_slave_register_tb ();
                     $display("-- Input data: 0x%x", tv_write_data);
                     $display("-- Selection: 0x%x", tv_sel);
 
-                    single_write(tv_addr, tv_sel, tv_write_data);
+                    single_write(tv_addr, tv_sel, tv_write_data, return_type);
 
-                    $display("## Test %1d: OK", current_test_num);
+                    if (tv_return_type != return_type) begin
+                        $display("!! Mismatch!");
+                        $display("!! Expected return with %1d, got %1d", tv_return_type, return_type);
+                        $display("!! (ACK is %1d, ERR is %1d)", RETURN_ACK, RETURN_ERR);
+                        $display("!! NOK!");
+                        errors = errors + 1;
+                    end else begin
+                        $display("## Test %1d: OK", current_test_num);
+                    end
                 end
                 `OP_READ_MODIFY_WRITE: begin
                     $display("## Test %1d: Read Modify Write", current_test_num);
@@ -230,17 +280,22 @@ module wb_slave_register_tb ();
                     $display("-- Input data: 0x%x", tv_write_data);
                     $display("-- Expected read: 0x%x", tv_expected_data);
 
-                    read_modify_write(tv_addr, tv_sel, tv_write_data, read_data);
+                    read_modify_write(tv_addr, tv_sel, tv_write_data, read_data, return_type);
 
-                    if (tv_expected_data == read_data) begin
-                        $display("## Test %1d: OK", current_test_num);
+                    if (tv_expected_data != read_data) begin
+                        $display("!! Mismatch!");
+                        $display("!! Expected 0x%x, got 0x%x (xor: 0x%x)",
+                            tv_expected_data, read_data, tv_expected_data ^ read_data);
+                        $display("!! NOK!");
+                        errors = errors + 1;
+                    end else if (tv_return_type != return_type) begin
+                        $display("!! Mismatch!");
+                        $display("!! Expected return with %1d, got %1d", tv_return_type, return_type);
+                        $display("!! (ACK is %1d, ERR is %1d)", RETURN_ACK, RETURN_ERR);
+                        $display("!! NOK!");
+                        errors = errors + 1;
                     end else begin
-                        if (tv_expected_data != read_data)
-                            $display("!! Mismatch!");
-                            $display("!! Expected 0x%x, got 0x%x (xor: 0x%x)",
-                                tv_expected_data, read_data, tv_expected_data ^ read_data);
-                            $display("!! NOK!");
-                            errors = errors + 1;
+                        $display("## Test %1d: OK", current_test_num);
                     end
                 end
                 default: begin

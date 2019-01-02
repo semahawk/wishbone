@@ -1,6 +1,6 @@
 // format:
 //
-//     <op>_<sel>_<addr>_<write data>_<expected output>
+//     <op>_<sel>_<addr>_<write data>_<expected output>_<return type>
 //
 // where <op> is a 4 bit value, and can be one of the following:
 //
@@ -11,44 +11,53 @@
 // <sel> indicates where valid data is placed (each bit specifiec which byte is valid)
 // and is DATA_WIDTH / GRANULE bits long
 //
+// <return type> indicates how the device is supposed to have returned, eg via ACK, or ERR
+// and is 4 bits long, where:
+//
+//     0 - the device is expected to return with ACK
+//     1 - the device is expected to return with ERR
+//
 // <addr> is ADDR_WIDTH long (parameter to wb_slave_register)
 // <write data> and <expected output> are both DATA_WIDTH (parameter to wb_slave_register)
 //
 
 // check that it's all zeroes initially
-0_f_0000_xxxxxxxx_00000000
+0_f_0000_xxxxxxxx_00000000_0
 // write with some value
-1_f_0000_11111111_xxxxxxxx
+1_f_0000_11111111_xxxxxxxx_0
 // read it back
-0_f_0000_xxxxxxxx_11111111
+0_f_0000_xxxxxxxx_11111111_0
 // write two lower bytes
-1_3_0000_22222222_xxxxxxxx
+1_3_0000_22222222_xxxxxxxx_0
 // read the whole thing, and only two lower bytes should be modified
-0_f_0000_xxxxxxxx_11112222
+0_f_0000_xxxxxxxx_11112222_0
 // write two upper bytes
-1_c_0000_33333333_xxxxxxxx
+1_c_0000_33333333_xxxxxxxx_0
 // read the whole thing, and only two upper bytes should be modified
-0_f_0000_xxxxxxxx_33332222
+0_f_0000_xxxxxxxx_33332222_0
 // write upper- and lower-most bytes
-1_9_0000_44444444_xxxxxxxx
+1_9_0000_44444444_xxxxxxxx_0
 // read the whole thing, and only the upper- and lower-most bytes should be modified
-0_f_0000_xxxxxxxx_44332244
+0_f_0000_xxxxxxxx_44332244_0
 // do the RMW cycle
-2_f_0000_55555555_44332244
+2_f_0000_55555555_44332244_0
 // and a second one
-2_f_0000_66666666_55555555
+2_f_0000_66666666_55555555_0
 // now a single, normal read, to double check
-0_f_0000_xxxxxxxx_66666666
+0_f_0000_xxxxxxxx_66666666_0
 
 // get register #0 back to it's original state
-1_f_0000_00000000_xxxxxxxx
+1_f_0000_00000000_xxxxxxxx_0
 // make sure it's 0x0
-0_f_0000_xxxxxxxx_00000000
+0_f_0000_xxxxxxxx_00000000_0
 // now check that register #1 is also 0x0
-0_f_0001_xxxxxxxx_00000000
+0_f_0001_xxxxxxxx_00000000_0
 // overwrite register #1
-1_f_0001_11111111_xxxxxxxx
+1_f_0001_11111111_xxxxxxxx_0
 // make sure that it's modified...
-0_f_0001_xxxxxxxx_11111111
+0_f_0001_xxxxxxxx_11111111_0
 // ...and that #0 stayed the same
-0_f_0000_xxxxxxxx_00000000
+0_f_0000_xxxxxxxx_00000000_0
+
+// let's address a nonexistent register
+0_f_ffff_xxxxxxxx_00000000_1

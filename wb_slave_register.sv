@@ -20,6 +20,12 @@
  *      Transfer ordering: Big endian
  *      Transfer sequencing: Undefined
  *
+ * Usage of ERR_O:
+ *
+ *      ERR_O is asserted (instead of ACK_O) when one of the following occurs:
+ *
+ *        - an out-of-bounds register is addressed
+ *
  * Wishbone specification used: B4 (https://cdn.opencores.org/downloads/wbspec_b4.pdf)
  *
  * Copyright (c) Szymon Urbaś <szymon.urbas@aol.com> All rights reserved.
@@ -68,6 +74,7 @@ module wb_slave_register (
     input wire we_i,
     input wire stb_i,
     output wire ack_o,
+    output wire err_o,
     input wire cyc_i
 );
 
@@ -79,6 +86,7 @@ module wb_slave_register (
 
     reg [DATA_WIDTH-1:0] register_value [0:REGISTER_NUM-1];
     reg ack = 1'h0;
+    reg err = 1'h0;
     state_t state = STATE_IDLE;
     int i;
 
@@ -86,6 +94,7 @@ module wb_slave_register (
         if (rst_i) begin
             state <= STATE_IDLE;
             ack <= 1'h0;
+            err <= 1'h0;
 
             for (i = 0; i < REGISTER_NUM; i++) begin
                 register_value[i] <= {DATA_WIDTH{1'h0}};
@@ -98,17 +107,24 @@ module wb_slave_register (
                     end
                 end
                 STATE_PROCESS: begin
-                    for (i = 0; i < SEL_WIDTH; i++) begin
-                        if (sel_i[i]) begin
-                            if (we_i)
-                                register_value[adr_i][i*GRANULE+:GRANULE] <= dat_i[i*GRANULE+:GRANULE];
-                            else
-                                dat_o[i*GRANULE+:GRANULE] <= register_value[adr_i][i*GRANULE+:GRANULE];
+                    if (adr_i > REGISTER_NUM) begin
+                        err <= 1'h1;
+                        ack <= 1'h0;
+                    end else begin
+                        for (i = 0; i < SEL_WIDTH; i++) begin
+                            if (sel_i[i]) begin
+                                if (we_i)
+                                    register_value[adr_i][i*GRANULE+:GRANULE] <= dat_i[i*GRANULE+:GRANULE];
+                                else
+                                    dat_o[i*GRANULE+:GRANULE] <= register_value[adr_i][i*GRANULE+:GRANULE];
+                            end
                         end
+
+                        ack <= 1'h1;
+                        err <= 1'h0;
                     end
 
                     state <= STATE_WAIT_FOR_PHASE_END;
-                    ack <= 1'h1;
                 end
                 STATE_WAIT_FOR_PHASE_END: begin
                     if (~stb_i) begin
@@ -121,5 +137,6 @@ module wb_slave_register (
     end
 
     assign ack_o = stb_i ? ack : 1'h0;
+    assign err_o = stb_i ? err : 1'h0;
 
 endmodule
