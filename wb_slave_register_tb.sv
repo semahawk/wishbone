@@ -1,5 +1,6 @@
 `define OP_CLASSIC_SINGLE_READ  0
 `define OP_CLASSIC_SINGLE_WRITE 1
+`define OP_READ_MODIFY_WRITE    2
 
 module wb_slave_register_tb ();
     localparam ADDR_WIDTH = 16;
@@ -109,6 +110,58 @@ module wb_slave_register_tb ();
         #2;
     endtask
 
+    task read_modify_write;
+        input  [ADDR_WIDTH-1:0] addr;
+        input  [7:0] selection;
+        input  [DATA_WIDTH-1:0] write_data;
+        output [DATA_WIDTH-1:0] read_data;
+
+        #1;
+
+        $display(".. %03g: Starting a cycle (adr_o -> 0x%x, sel_o -> 0x%x, we_o -> 0, cyc_o -> 1, stb_o -> 1)",
+            $time, addr, selection);
+        $display(".. %03g: Read phase (stb_o -> 1)", $time);
+
+        adr_o = addr;
+        sel_o = selection;
+        we_o = 1'h0;
+        cyc_o = 1'h1;
+        stb_o = 1'h1;
+
+        while (ack_i != 1'h1) begin
+            $display(".. %03g: Waiting for ACK...", $time);
+            #1;
+        end
+
+        read_data = dat_i;
+
+        $display(".. %03g: Received data: 0x%x", $time, read_data);
+        $display(".. %03g: Ending phase (stb_o -> 0)", $time);
+
+        stb_o = 1'h0;
+
+        #2;
+
+        $display(".. %03g: Write phase (dat_o -> 0x%x, stb_o -> 1)", $time, write_data);
+
+        dat_o = write_data;
+        we_o = 1'h1;
+        stb_o = 1'h1;
+
+        while (ack_i != 1'h1) begin
+            $display(".. %03g: Waiting for ACK...", $time);
+            #1;
+        end
+
+        $display(".. %03g: Ending cycle (cyc_o -> 0, stb_o -> 0, we_o -> 0)", $time);
+
+        stb_o = 1'h0;
+        cyc_o = 1'h0;
+        we_o = 1'h0;
+
+        #2;
+    endtask
+
     initial begin
         $dumpfile(`WAVE_FILE);
         $dumpvars(0, slave_tb);
@@ -157,11 +210,32 @@ module wb_slave_register_tb ();
                 `OP_CLASSIC_SINGLE_WRITE: begin
                     $display("## Test %1d: Classic Single Write", current_test_num);
                     $display("-- Address: 0x%x", tv_addr);
+                    $display("-- Input data: 0x%x", tv_write_data);
                     $display("-- Selection: 0x%x", tv_sel);
 
                     single_write(tv_addr, tv_sel, tv_write_data);
 
                     $display("## Test %1d: OK", current_test_num);
+                end
+                `OP_READ_MODIFY_WRITE: begin
+                    $display("## Test %1d: Read Modify Write", current_test_num);
+                    $display("-- Address: 0x%x", tv_addr);
+                    $display("-- Selection: 0x%x", tv_sel);
+                    $display("-- Input data: 0x%x", tv_write_data);
+                    $display("-- Expected read: 0x%x", tv_expected_data);
+
+                    read_modify_write(tv_addr, tv_sel, tv_write_data, read_data);
+
+                    if (tv_expected_data == read_data) begin
+                        $display("## Test %1d: OK", current_test_num);
+                    end else begin
+                        if (tv_expected_data != read_data)
+                            $display("!! Mismatch!");
+                            $display("!! Expected 0x%x, got 0x%x (xor: 0x%x)",
+                                tv_expected_data, read_data, tv_expected_data ^ read_data);
+                            $display("!! NOK!");
+                            errors = errors + 1;
+                    end
                 end
                 default: begin
                     $error("# test %2d: Unknown op: %x",

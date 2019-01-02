@@ -18,3 +18,7 @@ here's what's actually implemented here:
 #### single write
 
 ![single write](one_single_write.png)
+
+#### read modify write
+
+![read modify write](read_modify_write.png)

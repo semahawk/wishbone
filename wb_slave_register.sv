@@ -8,6 +8,7 @@
  * Supported cycles:
  *
  *      SLAVE, READ / WRITE
+ *      SLAVE, READ MODIFY WRITE
  *
  * Data organization:
  *

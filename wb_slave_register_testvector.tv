@@ -6,6 +6,7 @@
 //
 //     0 - classic single read (<write data> ignored)
 //     1 - classic single write (<expected output> ignored)
+//     2 - read modfy write
 //
 // <sel> indicates where valid data is placed (each bit specifiec which byte is valid)
 // and is DATA_WIDTH / GRANULE bits long
@@ -32,3 +33,9 @@
 1_9_0000_44444444_xxxxxxxx
 // read the whole thing, and only the upper- and lower-most bytes should be modified
 0_f_0000_xxxxxxxx_44332244
+// do the RMW cycle
+2_f_0000_55555555_44332244
+// and a second one
+2_f_0000_66666666_55555555
+// now a single, normal read, to double check
+0_f_0000_xxxxxxxx_66666666
