@@ -73,7 +73,6 @@ module wb_slave_register (
     parameter GRANULE = 8;
 
     reg [DATA_WIDTH-1:0] register_value = {DATA_WIDTH{1'h0}};
-    reg [7:0] selection; // maximum number of selection bits (max port size / lowest granule)
     reg ack = 1'h0;
     state_t state = STATE_IDLE;
     int i;
@@ -83,12 +82,11 @@ module wb_slave_register (
             STATE_IDLE: begin
                 if ((cyc_i) && (stb_i)) begin
                     state <= STATE_PROCESS;
-                    selection <= sel_i;
                 end
             end
             STATE_PROCESS: begin
                 for (i = 0; i < DATA_WIDTH / GRANULE; i++) begin
-                    if (selection[i]) begin
+                    if (sel_i[i]) begin
                         if (we_i)
                             register_value[i*GRANULE+:GRANULE] <= dat_i[i*GRANULE+:GRANULE];
                         else
