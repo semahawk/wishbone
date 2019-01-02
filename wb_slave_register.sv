@@ -81,7 +81,7 @@ module wb_slave_register (
     always @(posedge clk_i) begin
         case (state)
             STATE_IDLE: begin
-                if ((cyc_i) && (stb_i)) begin
+                if (stb_i) begin
                     state <= STATE_PROCESS;
                 end
             end
