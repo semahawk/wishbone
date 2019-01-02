@@ -8,27 +8,27 @@
 //     1 - classic single write (<expected output> ignored)
 //
 // <sel> indicates where valid data is placed (each bit specifiec which byte is valid)
-// and is always 8 bits long
+// and is DATA_WIDTH / GRANULE bits long
 //
 // <addr> is ADDR_WIDTH long (parameter to wb_slave_register)
 // <write data> and <expected output> are both DATA_WIDTH (parameter to wb_slave_register)
 //
 
 // check that it's all zeroes initially
-0_0f_0000_xxxxxxxx_00000000
+0_f_0000_xxxxxxxx_00000000
 // write with some value
-1_0f_0000_11111111_xxxxxxxx
+1_f_0000_11111111_xxxxxxxx
 // read it back
-0_0f_0000_xxxxxxxx_11111111
+0_f_0000_xxxxxxxx_11111111
 // write two lower bytes
-1_03_0000_22222222_xxxxxxxx
+1_3_0000_22222222_xxxxxxxx
 // read the whole thing, and only two lower bytes should be modified
-0_0f_0000_xxxxxxxx_11112222
+0_f_0000_xxxxxxxx_11112222
 // write two upper bytes
-1_0c_0000_33333333_xxxxxxxx
+1_c_0000_33333333_xxxxxxxx
 // read the whole thing, and only two upper bytes should be modified
-0_0f_0000_xxxxxxxx_33332222
+0_f_0000_xxxxxxxx_33332222
 // write upper- and lower-most bytes
-1_09_0000_44444444_xxxxxxxx
+1_9_0000_44444444_xxxxxxxx
 // read the whole thing, and only the upper- and lower-most bytes should be modified
-0_0f_0000_xxxxxxxx_44332244
+0_f_0000_xxxxxxxx_44332244

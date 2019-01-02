@@ -5,6 +5,7 @@ module wb_slave_register_tb ();
     localparam ADDR_WIDTH = 16;
     localparam DATA_WIDTH = 32;
     localparam GRANULE = 8;
+    localparam SEL_WIDTH = DATA_WIDTH / GRANULE;
 
     reg rst_i;
     reg clk_i;
@@ -13,15 +14,15 @@ module wb_slave_register_tb ();
     reg [ADDR_WIDTH-1:0] adr_o;
     reg [DATA_WIDTH-1:0] dat_i;
     reg [DATA_WIDTH-1:0] dat_o;
-    reg [7:0] sel_o;
+    reg [SEL_WIDTH-1:0] sel_o;
     reg we_o;
     reg cyc_o;
 
     reg [DATA_WIDTH-1:0] read_data;
 
-    reg [4+8+ADDR_WIDTH+DATA_WIDTH*2-1:0] testvector [31:0];
+    reg [4+SEL_WIDTH+ADDR_WIDTH+DATA_WIDTH*2-1:0] testvector [31:0];
     reg [3:0] tv_op;
-    reg [7:0] tv_sel;
+    reg [SEL_WIDTH-1:0] tv_sel;
     reg [ADDR_WIDTH-1:0] tv_addr;
     reg [DATA_WIDTH-1:0] tv_write_data;
     reg [DATA_WIDTH-1:0] tv_expected_data;

@@ -61,7 +61,7 @@ module wb_slave_register (
     input wire [ADDR_WIDTH-1:0] adr_i,
     input wire [DATA_WIDTH-1:0] dat_i,
     output reg [DATA_WIDTH-1:0] dat_o,
-    input wire [7:0] sel_i,
+    input wire [SEL_WIDTH-1:0] sel_i,
     input wire we_i,
     input wire stb_i,
     output wire ack_o,
@@ -71,6 +71,7 @@ module wb_slave_register (
     parameter ADDR_WIDTH = 16;
     parameter DATA_WIDTH = 32;
     parameter GRANULE = 8;
+    localparam SEL_WIDTH = DATA_WIDTH / GRANULE;
 
     reg [DATA_WIDTH-1:0] register_value = {DATA_WIDTH{1'h0}};
     reg ack = 1'h0;
@@ -85,7 +86,7 @@ module wb_slave_register (
                 end
             end
             STATE_PROCESS: begin
-                for (i = 0; i < DATA_WIDTH / GRANULE; i++) begin
+                for (i = 0; i < SEL_WIDTH; i++) begin
                     if (sel_i[i]) begin
                         if (we_i)
                             register_value[i*GRANULE+:GRANULE] <= dat_i[i*GRANULE+:GRANULE];
