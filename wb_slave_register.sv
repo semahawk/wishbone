@@ -60,7 +60,7 @@ module wb_slave_register (
     input wire clk_i,
     input wire [ADDR_WIDTH-1:0] adr_i,
     input wire [DATA_WIDTH-1:0] dat_i,
-    output wire [DATA_WIDTH-1:0] dat_o,
+    output reg [DATA_WIDTH-1:0] dat_o,
     input wire [7:0] sel_i,
     input wire we_i,
     input wire stb_i,
@@ -74,7 +74,6 @@ module wb_slave_register (
 
     reg [DATA_WIDTH-1:0] register_value = {DATA_WIDTH{1'h0}};
     reg [DATA_WIDTH-1:0] input_data = {DATA_WIDTH{1'h0}};
-    reg [DATA_WIDTH-1:0] output_data = {DATA_WIDTH{1'h0}};
     reg [ADDR_WIDTH-1:0] addr;
     reg [7:0] selection; // maximum number of selection bits (max port size / lowest granule)
     reg ack = 1'h0;
@@ -100,7 +99,7 @@ module wb_slave_register (
                         if (we_i)
                             register_value[i*GRANULE+:GRANULE] <= input_data[i*GRANULE+:GRANULE];
                         else
-                            output_data[i*GRANULE+:GRANULE] <= register_value[i*GRANULE+:GRANULE];
+                            dat_o[i*GRANULE+:GRANULE] <= register_value[i*GRANULE+:GRANULE];
                     end
                 end
 
@@ -117,6 +116,5 @@ module wb_slave_register (
     end
 
     assign ack_o = stb_i ? ack : 1'h0;
-    assign dat_o = output_data;
-  
+
 endmodule
