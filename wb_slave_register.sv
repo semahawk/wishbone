@@ -2,8 +2,10 @@
  *
  * General description:
  *
- *     A simple register device, which retains it's data. Reading will return
- *     the register's data, and writing to it will modify it.
+ *     A simple register array device, which contains a number of identical registers.
+ *     Number of registers is controlled by a module parameter. They are then
+ *     addressed using the ADR_I lines (where, ADR_I = 0x0, is first register,
+ *     ADR_I = 0x1 is second register, etc. regardless of their sizes)
  *
  * Supported cycles:
  *
@@ -72,9 +74,10 @@ module wb_slave_register (
     parameter ADDR_WIDTH = 16;
     parameter DATA_WIDTH = 32;
     parameter GRANULE = 8;
+    parameter REGISTER_NUM = 16;
     localparam SEL_WIDTH = DATA_WIDTH / GRANULE;
 
-    reg [DATA_WIDTH-1:0] register_value;
+    reg [DATA_WIDTH-1:0] register_value [0:REGISTER_NUM-1];
     reg ack = 1'h0;
     state_t state = STATE_IDLE;
     int i;
@@ -82,8 +85,11 @@ module wb_slave_register (
     always @(posedge clk_i) begin
         if (rst_i) begin
             state <= STATE_IDLE;
-            register_value <= {DATA_WIDTH{1'h0}};
             ack <= 1'h0;
+
+            for (i = 0; i < REGISTER_NUM; i++) begin
+                register_value[i] <= {DATA_WIDTH{1'h0}};
+            end
         end else begin
             case (state)
                 STATE_IDLE: begin
@@ -95,9 +101,9 @@ module wb_slave_register (
                     for (i = 0; i < SEL_WIDTH; i++) begin
                         if (sel_i[i]) begin
                             if (we_i)
-                                register_value[i*GRANULE+:GRANULE] <= dat_i[i*GRANULE+:GRANULE];
+                                register_value[adr_i][i*GRANULE+:GRANULE] <= dat_i[i*GRANULE+:GRANULE];
                             else
-                                dat_o[i*GRANULE+:GRANULE] <= register_value[i*GRANULE+:GRANULE];
+                                dat_o[i*GRANULE+:GRANULE] <= register_value[adr_i][i*GRANULE+:GRANULE];
                         end
                     end
 

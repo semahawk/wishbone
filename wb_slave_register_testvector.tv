@@ -39,3 +39,16 @@
 2_f_0000_66666666_55555555
 // now a single, normal read, to double check
 0_f_0000_xxxxxxxx_66666666
+
+// get register #0 back to it's original state
+1_f_0000_00000000_xxxxxxxx
+// make sure it's 0x0
+0_f_0000_xxxxxxxx_00000000
+// now check that register #1 is also 0x0
+0_f_0001_xxxxxxxx_00000000
+// overwrite register #1
+1_f_0001_11111111_xxxxxxxx
+// make sure that it's modified...
+0_f_0001_xxxxxxxx_11111111
+// ...and that #0 stayed the same
+0_f_0000_xxxxxxxx_00000000
