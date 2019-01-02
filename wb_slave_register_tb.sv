@@ -8,7 +8,7 @@ module wb_slave_register_tb ();
     localparam GRANULE = 8;
     localparam SEL_WIDTH = DATA_WIDTH / GRANULE;
 
-    reg rst_i;
+    reg rst_o;
     reg clk_i;
     reg ack_i;
     reg stb_o;
@@ -35,7 +35,7 @@ module wb_slave_register_tb ();
         .DATA_WIDTH(DATA_WIDTH),
         .GRANULE(GRANULE)
     ) slave_tb (
-        .rst_i(rst_i),
+        .rst_i(rst_o),
         .clk_i(clk_i),
         .adr_i(adr_o),
         .dat_o(dat_i),
@@ -174,6 +174,12 @@ module wb_slave_register_tb ();
         we_o = 0;
         adr_o = 0;
         dat_o = 0;
+
+        // reset the slave
+        #1;
+        rst_o = 1;
+        #1;
+        rst_o = 0;
 
         for (int i = 0; i < 32; i++) begin
             { tv_op, tv_sel, tv_addr, tv_write_data, tv_expected_data } = testvector[i];

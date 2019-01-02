@@ -74,38 +74,44 @@ module wb_slave_register (
     parameter GRANULE = 8;
     localparam SEL_WIDTH = DATA_WIDTH / GRANULE;
 
-    reg [DATA_WIDTH-1:0] register_value = {DATA_WIDTH{1'h0}};
+    reg [DATA_WIDTH-1:0] register_value;
     reg ack = 1'h0;
     state_t state = STATE_IDLE;
     int i;
 
     always @(posedge clk_i) begin
-        case (state)
-            STATE_IDLE: begin
-                if (stb_i) begin
-                    state <= STATE_PROCESS;
-                end
-            end
-            STATE_PROCESS: begin
-                for (i = 0; i < SEL_WIDTH; i++) begin
-                    if (sel_i[i]) begin
-                        if (we_i)
-                            register_value[i*GRANULE+:GRANULE] <= dat_i[i*GRANULE+:GRANULE];
-                        else
-                            dat_o[i*GRANULE+:GRANULE] <= register_value[i*GRANULE+:GRANULE];
+        if (rst_i) begin
+            state <= STATE_IDLE;
+            register_value <= {DATA_WIDTH{1'h0}};
+            ack <= 1'h0;
+        end else begin
+            case (state)
+                STATE_IDLE: begin
+                    if (stb_i) begin
+                        state <= STATE_PROCESS;
                     end
                 end
+                STATE_PROCESS: begin
+                    for (i = 0; i < SEL_WIDTH; i++) begin
+                        if (sel_i[i]) begin
+                            if (we_i)
+                                register_value[i*GRANULE+:GRANULE] <= dat_i[i*GRANULE+:GRANULE];
+                            else
+                                dat_o[i*GRANULE+:GRANULE] <= register_value[i*GRANULE+:GRANULE];
+                        end
+                    end
 
-                state <= STATE_WAIT_FOR_PHASE_END;
-                ack <= 1'h1;
-            end
-            STATE_WAIT_FOR_PHASE_END: begin
-                if (~stb_i) begin
-                    state <= STATE_IDLE;
-                    ack <= 1'h0;
+                    state <= STATE_WAIT_FOR_PHASE_END;
+                    ack <= 1'h1;
                 end
-            end
-        endcase
+                STATE_WAIT_FOR_PHASE_END: begin
+                    if (~stb_i) begin
+                        state <= STATE_IDLE;
+                        ack <= 1'h0;
+                    end
+                end
+            endcase
+        end
     end
 
     assign ack_o = stb_i ? ack : 1'h0;
