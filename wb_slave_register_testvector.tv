@@ -7,6 +7,7 @@
 //     0 - classic single read (<write data> ignored)
 //     1 - classic single write (<expected output> ignored)
 //     2 - read modfy write
+//     3 - pipelined single read (<write data> ignored)
 //
 // <sel> indicates where valid data is placed (each bit specifiec which byte is valid)
 // and is DATA_WIDTH / GRANULE bits long
@@ -61,3 +62,6 @@
 
 // let's address a nonexistent register
 0_f_ffff_xxxxxxxx_00000000_1
+
+// pipelined single read
+3_f_0002_xxxxxxxx_00000000_0
