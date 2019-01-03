@@ -1,7 +1,8 @@
-`define OP_CLASSIC_SINGLE_READ   0
-`define OP_CLASSIC_SINGLE_WRITE  1
-`define OP_READ_MODIFY_WRITE     2
-`define OP_PIPELINED_SINGLE_READ 3
+`define OP_CLASSIC_SINGLE_READ    0
+`define OP_CLASSIC_SINGLE_WRITE   1
+`define OP_READ_MODIFY_WRITE      2
+`define OP_PIPELINED_SINGLE_READ  3
+`define OP_PIPELINED_SINGLE_WRITE 4
 
 typedef enum {
     RETURN_ACK,
@@ -238,7 +239,7 @@ module wb_slave_register_tb ();
 
         @(posedge clk_i);
 
-        adr_o = {DATA_WIDTH{1'bx}};
+        adr_o = {ADDR_WIDTH{1'bx}};
         sel_o = {SEL_WIDTH{1'bx}};
         stb_o = 1'h0;
         i = 0;
@@ -264,6 +265,52 @@ module wb_slave_register_tb ();
         cyc_o = 1'h0;
 
         #1;
+    endtask
+
+    task pipelined_single_write;
+        input [ADDR_WIDTH-1:0] addr;
+        input [7:0] selection;
+        input [DATA_WIDTH-1:0] data;
+        output [3:0] return_type;
+
+        @(posedge clk_i);
+
+        $display(".. %03g: Starting a cycle (adr_o -> 0x%x, sel_o -> 0x%x, dat_o -> 0x%x, we_o -> 0, cyc_o -> 1, stb_o -> 1)",
+            $time, addr, selection, data);
+
+        adr_o = addr;
+        sel_o = selection;
+        dat_o = data;
+        we_o = 1'h1;
+        cyc_o = 1'h1;
+        stb_o = 1'h1;
+
+        @(posedge clk_i);
+
+        adr_o = {ADDR_WIDTH{1'bx}};
+        dat_o = {DATA_WIDTH{1'bx}};
+        sel_o = {SEL_WIDTH{1'bx}};
+        we_o = 1'h0;
+        stb_o = 1'h0;
+
+        while (ack_i != 1'h1 && err_i != 1'h1) begin
+            $display(".. %03g: Waiting for ACK or ERR...", $time);
+            @(posedge clk_i);
+        end
+
+        if (err_i == 1'h1) begin
+            $display(".. %03g: Got ERR", $time);
+            return_type = RETURN_ERR;
+        end else if (ack_i == 1'h1) begin
+            $display(".. %03g: Got ACK", $time);
+            return_type = RETURN_ACK;
+        end
+
+        $display(".. %03g: Ending cycle (cyc_o -> 0)", $time);
+
+        cyc_o = 1'h0;
+
+        #20;
     endtask
 
     initial begin
@@ -382,6 +429,24 @@ module wb_slave_register_tb ();
                         $display("!! NOK!");
                         errors = errors + 1;
                     end else if (tv_return_type != return_type) begin
+                        $display("!! Mismatch!");
+                        $display("!! Expected return with %1d, got %1d", tv_return_type, return_type);
+                        $display("!! (ACK is %1d, ERR is %1d)", RETURN_ACK, RETURN_ERR);
+                        $display("!! NOK!");
+                        errors = errors + 1;
+                    end else begin
+                        $display("## Test %1d: OK", current_test_num);
+                    end
+                end
+                `OP_PIPELINED_SINGLE_WRITE: begin
+                    $display("## Test %1d: Pipelined Single Write", current_test_num);
+                    $display("-- Address: 0x%x", tv_addr);
+                    $display("-- Input data: 0x%x", tv_write_data);
+                    $display("-- Selection: 0x%x", tv_sel);
+
+                    pipelined_single_write(tv_addr, tv_sel, tv_write_data, return_type);
+
+                    if (tv_return_type != return_type) begin
                         $display("!! Mismatch!");
                         $display("!! Expected return with %1d, got %1d", tv_return_type, return_type);
                         $display("!! (ACK is %1d, ERR is %1d)", RETURN_ACK, RETURN_ERR);

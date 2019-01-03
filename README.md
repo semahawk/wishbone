@@ -28,3 +28,7 @@ here's what's actually implemented here:
 #### pipelined read
 
 ![pipelined read](pipelined_read.png)
+
+#### pipelined write
+
+![pipelined write](pipelined_write.png)

@@ -8,6 +8,7 @@
 //     1 - classic single write (<expected output> ignored)
 //     2 - read modfy write
 //     3 - pipelined single read (<write data> ignored)
+//     4 - pipelined single write (<expected data> ignored)
 //
 // <sel> indicates where valid data is placed (each bit specifiec which byte is valid)
 // and is DATA_WIDTH / GRANULE bits long
@@ -65,3 +66,7 @@
 
 // pipelined single read
 3_f_0002_xxxxxxxx_00000000_0
+// pipelined single write
+4_f_0002_12345678_00000000_0
+// pipelined single read
+3_f_0002_xxxxxxxx_12345678_0

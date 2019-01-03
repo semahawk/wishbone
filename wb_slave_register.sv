@@ -11,7 +11,7 @@
  *
  *      SLAVE, READ / WRITE
  *      SLAVE, READ MODIFY WRITE
- *      SLAVE, PIPELINED READ
+ *      SLAVE, PIPELINED READ / WRITE
  *
  * Data organization:
  *
