@@ -130,6 +130,7 @@ module wb_slave_register (
                     if (~stb_i) begin
                         state <= STATE_IDLE;
                         ack <= 1'h0;
+                        err <= 1'h0;
                     end
                 end
             endcase
