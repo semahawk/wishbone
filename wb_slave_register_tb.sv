@@ -1,8 +1,10 @@
-`define OP_CLASSIC_SINGLE_READ    0
-`define OP_CLASSIC_SINGLE_WRITE   1
-`define OP_READ_MODIFY_WRITE      2
-`define OP_PIPELINED_SINGLE_READ  3
-`define OP_PIPELINED_SINGLE_WRITE 4
+typedef enum {
+    OP_CLASSIC_SINGLE_READ,
+    OP_CLASSIC_SINGLE_WRITE,
+    OP_READ_MODIFY_WRITE,
+    OP_PIPELINED_SINGLE_READ,
+    OP_PIPELINED_SINGLE_WRITE
+} op_t;
 
 typedef enum {
     RETURN_ACK,
@@ -347,7 +349,7 @@ module wb_slave_register_tb ();
             current_test_num = current_test_num + 1;
 
             case (tv_op)
-                `OP_CLASSIC_SINGLE_READ: begin
+                OP_CLASSIC_SINGLE_READ: begin
                     $display("## Test %1d: Classic Single Read", current_test_num);
                     $display("-- Address: 0x%x", tv_addr);
                     $display("-- Selection: 0x%x", tv_sel);
@@ -371,7 +373,7 @@ module wb_slave_register_tb ();
                         $display("## Test %1d: OK", current_test_num);
                     end
                 end
-                `OP_CLASSIC_SINGLE_WRITE: begin
+                OP_CLASSIC_SINGLE_WRITE: begin
                     $display("## Test %1d: Classic Single Write", current_test_num);
                     $display("-- Address: 0x%x", tv_addr);
                     $display("-- Input data: 0x%x", tv_write_data);
@@ -389,7 +391,7 @@ module wb_slave_register_tb ();
                         $display("## Test %1d: OK", current_test_num);
                     end
                 end
-                `OP_READ_MODIFY_WRITE: begin
+                OP_READ_MODIFY_WRITE: begin
                     $display("## Test %1d: Read Modify Write", current_test_num);
                     $display("-- Address: 0x%x", tv_addr);
                     $display("-- Selection: 0x%x", tv_sel);
@@ -414,7 +416,7 @@ module wb_slave_register_tb ();
                         $display("## Test %1d: OK", current_test_num);
                     end
                 end
-                `OP_PIPELINED_SINGLE_READ: begin
+                OP_PIPELINED_SINGLE_READ: begin
                     $display("## Test %1d: Pipelined Single Read", current_test_num);
                     $display("-- Address: 0x%x", tv_addr);
                     $display("-- Selection: 0x%x", tv_sel);
@@ -438,7 +440,7 @@ module wb_slave_register_tb ();
                         $display("## Test %1d: OK", current_test_num);
                     end
                 end
-                `OP_PIPELINED_SINGLE_WRITE: begin
+                OP_PIPELINED_SINGLE_WRITE: begin
                     $display("## Test %1d: Pipelined Single Write", current_test_num);
                     $display("-- Address: 0x%x", tv_addr);
                     $display("-- Input data: 0x%x", tv_write_data);
