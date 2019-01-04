@@ -1,7 +1,7 @@
 DUT ?= $(shell find -maxdepth 1 -type d -name "wb_*" | head -1)
 
-wave_file = $(DUT)/wave.vcd
-wave_save_file = $(DUT)/wave.gtkw
+wave_file = wave.vcd
+wave_save_file = wave.gtkw
 
 compiler ?= iverilog
 compiler_opts ?= -g2012 -DWAVE_FILE='"$(wave_file)"'
@@ -19,7 +19,7 @@ run: $(DUT)/main
 
 .PHONY: wave
 wave: run
-	$(viewer) $(wave_file) $(wave_save_file)
+	(cd $(DUT); $(viewer) $(wave_file) $(wave_save_file))
 
 .PHONY: clean
 clean:
