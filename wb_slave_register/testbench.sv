@@ -319,7 +319,7 @@ module wb_slave_register_tb ();
         $dumpfile(`WAVE_FILE);
         $dumpvars(0, slave_tb);
 
-        $readmemh("wb_slave_register_testvector.tv", testvector);
+        $readmemh("testvector.tv", testvector);
 
         clk_i = 0;
         cyc_o = 0;
