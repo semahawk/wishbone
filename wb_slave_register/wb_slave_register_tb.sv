@@ -312,7 +312,7 @@ module wb_slave_register_tb ();
 
         cyc_o = 1'h0;
 
-        #20;
+        #1;
     endtask
 
     initial begin

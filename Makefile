@@ -1,23 +1,26 @@
-wave_file = wave.vcd
+DUT ?= $(shell find -maxdepth 1 -type d -name "wb_*" | head -1)
+
+wave_file = $(DUT)/wave.vcd
+wave_save_file = $(DUT)/wave.gtkw
 
 compiler ?= iverilog
 compiler_opts ?= -g2012 -DWAVE_FILE='"$(wave_file)"'
 runtime ?= vvp
 viewer ?= gtkwave
 
-files = $(wildcard *.sv)
+files = $(wildcard $(DUT)/*.sv)
 
-main: $(files)
+$(DUT)/main: $(files)
 	$(compiler) $(compiler_opts) -o $@ $(files)
 
 .PHONY: run
-run: main
-	$(runtime) $<
+run: $(DUT)/main
+	(cd $(DUT); $(runtime) main)
 
 .PHONY: wave
 wave: run
-	$(viewer) $(wave_file)
+	$(viewer) $(wave_file) $(wave_save_file)
 
 .PHONY: clean
 clean:
-	rm -rf main $(wave_file)
+	rm -rf **/main $(wave_file)
