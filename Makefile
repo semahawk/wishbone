@@ -8,10 +8,10 @@ compiler_opts ?= -g2012 -DWAVE_FILE='"$(wave_file)"'
 runtime ?= vvp
 viewer ?= gtkwave
 
-files = $(wildcard $(DUT)/*.sv)
+files = $(shell find -name "*.sv")
 
 $(DUT)/main: $(files)
-	$(compiler) $(compiler_opts) -o $@ $(files)
+	$(compiler) $(compiler_opts) -s$(DUT)_tb -o $@ $(files)
 
 .PHONY: run
 run: $(DUT)/main
