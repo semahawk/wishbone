@@ -1,4 +1,4 @@
-DUT ?= $(shell find -maxdepth 1 -type d -name "wb_*" | head -1)
+DUT ?= $(shell find -maxdepth 1 -type d -name "wb_*" -printf '%P\n' -quit)
 
 wave_file = wave.vcd
 wave_save_file = wave.gtkw

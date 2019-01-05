@@ -4,13 +4,19 @@ Trying to learn Wishbone by implementing few master/slave devices
 
 ## what devices are implemented
 
-### nop
+### nop, slave
 
 [wb_slave_nop/](wb_slave_nop/)
 
 a slave device does nothing - it _only_ responds with an ACK as soon as possible
 
-### register(s)
+### nop, master
+
+[wb_master_nop/](wb_master_nop/)
+
+a master device does nothing - it basically only starts a bus cycle, waits for ACK and that's it
+
+### register(s), slave
 
 [wb_slave_register/](wb_slave_register/)
 
