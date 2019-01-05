@@ -1,7 +1,14 @@
 # wishbone
+
 Trying to learn Wishbone by implementing few master/slave devices
 
-## what is implemented
+## what devices are implemented
+
+### nop
+
+[wb_slave_nop/](wb_slave_nop/)
+
+a slave device does nothing - it _only_ responds with an ACK as soon as possible
 
 ### register(s)
 
