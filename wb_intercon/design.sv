@@ -117,6 +117,9 @@ module wb_intercon (
     // distribute the output data of the selected slave to all masters
     assign i2m_dat_o = s2i_dat_i[DATA_WIDTH*selected_slave+:DATA_WIDTH];
 
+    int n, i;
+    bit found_next_master;
+
     always @(posedge clk_i) begin
         if (rst_i) begin
             state <= STATE_WAIT_FOR_BUS_CLAIM;
@@ -126,16 +129,24 @@ module wb_intercon (
                 STATE_WAIT_FOR_BUS_CLAIM: begin
                     // reduction OR - check if at least one bit is set
                     if (|m2i_cyc_i) begin
-                        state <= STATE_WAIT_FOR_CYCLE_END;
+                        found_next_master = 0;
+                        // find the next right-most bit, starting from 'grant' bit
+                        i = grant;
+                        for (n = 0; n < MASTERS_NUM && !found_next_master; n++) begin
+                            if (m2i_cyc_i[i]) begin
+                                found_next_master = 1;
+                                state <= STATE_WAIT_FOR_CYCLE_END;
+                                grant <= i;
+                            end
+
+                            i = (i + 1) % MASTERS_NUM;
+                        end
                     end
                 end
                 STATE_WAIT_FOR_CYCLE_END: begin
                     if (~m2i_cyc_i[grant]) begin
                         state <= STATE_WAIT_FOR_BUS_CLAIM;
-                        if (grant + 1 >= MASTERS_NUM)
-                            grant <= 0;
-                        else
-                            grant <= grant + 1;
+                        grant <= (grant + 1) % MASTERS_NUM;
                     end
                 end
             endcase
