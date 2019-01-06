@@ -24,3 +24,9 @@ a slave device which implements a set of basic registers - writing to them will 
 
 number of registers is configurable and is done via a module parameter
 
+### seq mem access, master
+
+[wb_master_seq_mem_access/](wb_master_seq_mem_access/)
+
+this master device continuously issues SINGLE WRITE and then SINGLE READ bus cycles
+over a range of memory address space (configurable via module parameters)
