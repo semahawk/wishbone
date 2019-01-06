@@ -48,50 +48,42 @@ module wb_intercon (
     input wire rst_i,
     input wire clk_i,
 
+    //
     // master -> intercon
+    //
     input wire [MASTERS_NUM-1:0] m2i_cyc_i,
     input wire [MASTERS_NUM-1:0] m2i_stb_i,
+    input wire [MASTERS_NUM-1:0] m2i_we_i,
     input wire [MASTERS_NUM*ADDR_WIDTH-1:0] m2i_adr_i,
+    input wire [MASTERS_NUM*DATA_WIDTH-1:0] m2i_dat_i,
+    input wire [MASTERS_NUM*8-1:0] m2i_sel_i,
+    //
     // intercon -> master
+    //
     output wire [MASTERS_NUM-1:0] i2m_ack_o,
+    output wire [MASTERS_NUM-1:0] i2m_err_o,
+    // shared between all masters
+    output wire [DATA_WIDTH-1:0] i2m_dat_o,
+    //
     // slave -> intercon
+    //
     input wire [SLAVES_NUM-1:0] s2i_ack_i,
+    input wire [SLAVES_NUM-1:0] s2i_err_i,
+    input wire [SLAVES_NUM*DATA_WIDTH-1:0] s2i_dat_i,
+    //
     // intercon -> slave
-    output wire [SLAVES_NUM-1:0] i2s_cyc_o,
+    //
+    // each slave gets it's own stb signal
     output wire [SLAVES_NUM-1:0] i2s_stb_o,
+    //  and these are all shared across all slaves
+    output wire i2s_cyc_o,
+    output wire [ADDR_WIDTH-1:0] i2s_adr_o,
+    output wire [DATA_WIDTH-1:0] i2s_dat_o,
+    output wire [SEL_WIDTH-1:0] i2s_sel_o,
+    output wire i2s_we_o,
 
     // so we don't have to care about the ','
     output wire nc
-
-`ifdef DUPA
-    // master -> intercon
-    input wire cyc_i [0:MASTERS_NUM-1],
-    input wire stb_i [0:MASTERS_NUM-1],
-    // intercon -> slave
-    output wire cyc_o, // every slave get's the same cyc signal
-    output wire stb_o [0:SLAVES_NUM-1],
-    // master -> intercon
-    input wire                  we_i  [0:MASTERS_NUM-1],
-    input wire [ADDR_WIDTH-1:0] adr_i [0:MASTERS_NUM-1],
-    input wire [DATA_WIDTH-1:0] dat_i [0:MASTERS_NUM-1],
-    input wire [SEL_WIDTH-1:0]  sel_i [0:MASTERS_NUM-1],
-    // intercon -> slave
-    // these four signal groups are all shared between all slaves
-    output wire                  we_o,
-    output wire [ADDR_WIDTH-1:0] adr_o,
-    output wire [DATA_WIDTH-1:0] dat_m2s_o,
-    output wire [SEL_WIDTH-1:0]  sel_o,
-    // slave -> intercon
-    input wire ack_i [0:SLAVES_NUM-1],
-    input wire err_i [0:SLAVES_NUM-1],
-    // intercon -> master
-    // each master get's it's own ack_i and err_i inputs
-    output wire ack_o [0:MASTERS_NUM-1],
-    output wire err_o [0:MASTERS_NUM-1],
-    // intercon -> master
-    // slave's data output, shared between all masters
-    output wire [DATA_WIDTH-1:0] dat_s2m_o
-`endif
 );
 
     parameter MASTERS_NUM = 2;
