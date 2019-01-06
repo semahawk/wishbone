@@ -30,17 +30,8 @@ module wb_master_nop_tb ();
 
         trigger_o = 1;
 
-        i = 0;
-        while (stb_i != 1 && i < 10) begin
-            $display("Waiting for STB to be asserted");
-            @(posedge clk_i);
-            i = i + 1;
-        end
-
-        if (i == 10) begin
-            $display("Failed to receive an ACK after 10 clocks!");
-            $finish;
-        end
+        $display("Waiting for STB to be asserted");
+        @(posedge stb_i);
 
         trigger_o = 0;
 
@@ -49,10 +40,8 @@ module wb_master_nop_tb ();
 
         ack_o = 1;
 
-        while (stb_i != 0) begin
-            $display("Waiting for phase end");
-            @(posedge clk_i);
-        end
+        $display("Waiting for phase end");
+        @(negedge stb_i);
 
         ack_o = 0;
 
