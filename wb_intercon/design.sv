@@ -56,7 +56,7 @@ module wb_intercon (
     input wire [MASTERS_NUM-1:0] m2i_we_i,
     input wire [MASTERS_NUM*ADDR_WIDTH-1:0] m2i_adr_i,
     input wire [MASTERS_NUM*DATA_WIDTH-1:0] m2i_dat_i,
-    input wire [MASTERS_NUM*8-1:0] m2i_sel_i,
+    input wire [MASTERS_NUM*SEL_WIDTH-1:0] m2i_sel_i,
     //
     // intercon -> master
     //
@@ -102,12 +102,19 @@ module wb_intercon (
     // upper 4 bits of granted master's adr_o select the slave
     assign selected_slave = m2i_adr_i[ADDR_WIDTH*grant+ADDR_WIDTH-4+:4];
 
-    // distribute the cyc_o signal (coming from the blessed master) to all slaves
-    assign i2s_cyc_o = {SLAVES_NUM{m2i_cyc_i[grant]}};
     // distribute the stb_o signal only to the one slave
     assign i2s_stb_o = m2i_stb_i[grant] << selected_slave;
+    // distribute the rest of signals, which are shared across all slaves
+    assign i2s_cyc_o = {SLAVES_NUM{m2i_cyc_i[grant]}};
+    assign i2s_adr_o = m2i_adr_i[ADDR_WIDTH*grant+:ADDR_WIDTH] & 12'hfff;
+    assign i2s_dat_o = m2i_dat_i[DATA_WIDTH*grant+:DATA_WIDTH];
+    assign i2s_sel_o = m2i_sel_i[SEL_WIDTH*grant+:SEL_WIDTH];
+    assign i2s_we_o = m2i_we_i[grant];
 
+    // distribute the ack signal coming back from the slave to the blessed master
     assign i2m_ack_o = s2i_ack_i[selected_slave] << grant;
+    // distribute the output data of the selected slave to all masters
+    assign i2m_dat_o = s2i_dat_i[DATA_WIDTH*selected_slave+:DATA_WIDTH];
 
     always @(posedge clk_i) begin
         if (rst_i) begin
@@ -124,7 +131,10 @@ module wb_intercon (
                 STATE_WAIT_FOR_CYCLE_END: begin
                     if (~m2i_cyc_i[grant]) begin
                         state <= STATE_WAIT_FOR_BUS_CLAIM;
-                        grant <= grant + 1;
+                        if (grant + 1 >= MASTERS_NUM)
+                            grant <= 0;
+                        else
+                            grant <= grant + 1;
                     end
                 end
             endcase

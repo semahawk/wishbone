@@ -4,11 +4,10 @@ a general Wishbone interconnect, supporting `N` masters and `M` slaves
 
 ## test scenario
 
-in the test scenario ([testbench.sv](testbench.sv)), we have 2 master devices (both [wb_master_nop](wb_master_nop/)) and 3 slave devices (two [wb_slave_nop](wb_slave_nop/) and one [wb_slave_register](wb_slave_register/))
+in the test scenario ([testbench.sv](testbench.sv)), we have three master devices (two [wb_master_nop](wb_master_nop/) and one [wb_master_seq_mem_access](wb_master_seq_mem_access/)) and 3 slave devices (two [wb_slave_nop](wb_slave_nop/) and one [wb_slave_register](wb_slave_register/))
 
-master device #0 always accesses address 0x0000, and master device #1 always accesses address 0x1000
-
-memory region 0x2000 - 0x2fff is not accessed yet
+master device #0 (nop) always accesses address 0x0000, and master device #1 (nop) always accesses address 0x1000
+master device #2 (seq_mem_access) sequentially accesses the memory range 0x2000 - 0x200f, issuing SINGLE WRITE and SINGLE READ commands
 
 ### memory map
 
