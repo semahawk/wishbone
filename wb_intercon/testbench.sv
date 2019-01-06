@@ -38,7 +38,10 @@ module wb_intercon_tb ();
         .i2s_stb_o({ s1_nop_stb_i, s0_nop_stb_i })
     );
 
-    wb_master_nop wb_master0_nop_dut (
+    wb_master_nop #(
+        .INITIAL_DELAY(4),
+        .WAIT_CYCLES(0)
+    ) wb_master0_nop_dut (
         .rst_i(rst_o),
         .clk_i(clk_o),
         .cyc_o(m0_nop_cyc_o),
@@ -46,7 +49,10 @@ module wb_intercon_tb ();
         .ack_i(m0_nop_ack_i)
     );
 
-    wb_master_nop wb_master1_nop_dut (
+    wb_master_nop #(
+        .INITIAL_DELAY(2),
+        .WAIT_CYCLES(0)
+    ) wb_master1_nop_dut (
         .rst_i(rst_o),
         .clk_i(clk_o),
         .cyc_o(m1_nop_cyc_o),
@@ -72,7 +78,7 @@ module wb_intercon_tb ();
 
     initial begin
         $dumpfile(`WAVE_FILE);
-        $dumpvars;
+        $dumpvars(0);
 
         rst_o = 0;
         clk_o = 0;

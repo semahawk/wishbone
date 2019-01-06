@@ -35,6 +35,15 @@
  *
  */
 
+package wb_intercon_pkg;
+
+    typedef enum {
+        STATE_WAIT_FOR_BUS_CLAIM,
+        STATE_WAIT_FOR_CYCLE_END
+    } state_t;
+
+endpackage
+
 module wb_intercon (
     input wire rst_i,
     input wire clk_i,
@@ -91,9 +100,12 @@ module wb_intercon (
     parameter DATA_WIDTH = 32;
     localparam SEL_WIDTH = 8;
 
-    reg [MASTERS_NUM-1:0] grant = 0;
+    import wb_intercon_pkg::*;
 
-    wire [SLAVES_NUM-1:0] selected_slave;
+    state_t state = STATE_WAIT_FOR_BUS_CLAIM;
+    reg [$clog2(MASTERS_NUM)-1:0] grant = 0;
+
+    wire [$clog2(SLAVES_NUM)-1:0] selected_slave;
 
     // upper 4 bits of granted master's adr_o select the slave
     assign selected_slave = m2i_adr_i[ADDR_WIDTH*grant+ADDR_WIDTH-4+:4];
@@ -106,7 +118,25 @@ module wb_intercon (
     assign i2m_ack_o = s2i_ack_i[selected_slave] << grant;
 
     always @(posedge clk_i) begin
-        // !! TODO
+        if (rst_i) begin
+            state <= STATE_WAIT_FOR_BUS_CLAIM;
+            grant <= 0;
+        end else begin
+            case (state)
+                STATE_WAIT_FOR_BUS_CLAIM: begin
+                    // reduction OR - check if at least one bit is set
+                    if (|m2i_cyc_i) begin
+                        state <= STATE_WAIT_FOR_CYCLE_END;
+                    end
+                end
+                STATE_WAIT_FOR_CYCLE_END: begin
+                    if (~m2i_cyc_i[grant]) begin
+                        state <= STATE_WAIT_FOR_BUS_CLAIM;
+                        grant <= grant + 1;
+                    end
+                end
+            endcase
+        end
     end
 
 endmodule

@@ -4,7 +4,9 @@ a general Wishbone interconnect, supporting `N` masters and `M` slaves
 
 ## test scenario
 
-in the test scenario ([testbench.sv](testbench.sv)), we have 1 master device ([wb_master_nop](wb_master_nop/)) and 2 slave devices (both [wb_slave_nop](wb_slave_nop/))
+in the test scenario ([testbench.sv](testbench.sv)), we have 2 master devices (both [wb_master_nop](wb_master_nop/)) and 2 slave devices (both [wb_slave_nop](wb_slave_nop/))
+
+master device #0 always accesses address 0x0000, and master device #1 always accesses address 0x1000
 
 ### memory map
 
@@ -26,3 +28,7 @@ in the test scenario ([testbench.sv](testbench.sv)), we have 1 master device ([w
 | 0xd000 - 0xdfff | Reserved   |
 | 0xe000 - 0xefff | Reserved   |
 | 0xf000 - 0xffff | Reserved   |
+
+### wave
+
+![wave](wave.png)

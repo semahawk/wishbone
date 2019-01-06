@@ -55,10 +55,13 @@ module wb_master_nop (
     output wire cyc_o
 );
 
+    parameter INITIAL_DELAY = 2;
+    parameter WAIT_CYCLES = 4;
+
     import wb_master_nop_pkg::*;
 
     state_t state = STATE_WAIT;
-    int wait_cycles = 2;
+    int wait_cycles = INITIAL_DELAY;
     reg stb = 1'h0;
     reg cyc = 1'h0;
 
@@ -70,13 +73,13 @@ module wb_master_nop (
             state <= STATE_WAIT;
             stb <= 0;
             cyc <= 0;
-            wait_cycles <= $urandom_range(4, 1);
+            wait_cycles <= WAIT_CYCLES;
         end else begin
             case (state)
                 STATE_WAIT: begin
                     if (wait_cycles == 0) begin
                         state <= STATE_START;
-                        wait_cycles <= $urandom_range(4, 1);
+                        wait_cycles <= WAIT_CYCLES;
                     end else begin
                         wait_cycles <= wait_cycles - 1;
                     end
