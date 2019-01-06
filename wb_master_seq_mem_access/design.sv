@@ -103,8 +103,6 @@ module wb_master_seq_mem_access (
                     curr_data <= dat_o;
                 end
                 STATE_WAIT_FOR_ACK_AFTER_WRITE: begin
-                    $display("Writing data: %x", dat_o);
-
                     if (ack_i) begin
                         state <= STATE_WAIT_BEFORE_READ;
                         stb <= 0;
@@ -123,8 +121,6 @@ module wb_master_seq_mem_access (
                 end
                 STATE_WAIT_FOR_ACK_AFTER_READ: begin
                     if (ack_i) begin
-                        $display("Data read: %x", dat_i);
-
                         state <= STATE_START;
                         stb <= 0;
                         cyc <= 0;
