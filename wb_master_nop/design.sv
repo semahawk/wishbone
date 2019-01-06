@@ -40,7 +40,8 @@
 package wb_master_nop_pkg;
 
 typedef enum int {
-    STATE_IDLE,
+    STATE_WAIT,
+    STATE_START,
     STATE_WAIT_FOR_ACK
 } state_t;
 
@@ -51,19 +52,13 @@ module wb_master_nop (
     input wire clk_i,
     input wire ack_i,
     output wire stb_o,
-    output wire cyc_o,
-
-    //
-    // non Wishbone signals below
-    //
-
-    // external input to trigger the master to execute the bus cycle
-    input wire trigger_i
+    output wire cyc_o
 );
 
     import wb_master_nop_pkg::*;
 
-    state_t state = STATE_IDLE;
+    state_t state = STATE_WAIT;
+    int wait_cycles = 2;
     reg stb = 1'h0;
     reg cyc = 1'h0;
 
@@ -72,21 +67,30 @@ module wb_master_nop (
 
     always @(posedge clk_i) begin
         if (rst_i) begin
-            state <= STATE_IDLE;
+            state <= STATE_WAIT;
+            stb <= 0;
+            cyc <= 0;
+            wait_cycles <= $urandom_range(4, 1);
         end else begin
             case (state)
-                STATE_IDLE: begin
-                    if (trigger_i) begin
-                        state <= STATE_WAIT_FOR_ACK;
-                        stb <= 1;
-                        cyc <= 1;
+                STATE_WAIT: begin
+                    if (wait_cycles == 0) begin
+                        state <= STATE_START;
+                        wait_cycles <= $urandom_range(4, 1);
+                    end else begin
+                        wait_cycles <= wait_cycles - 1;
                     end
+                end
+                STATE_START: begin
+                    state <= STATE_WAIT_FOR_ACK;
+                    stb <= 1;
+                    cyc <= 1;
                 end
                 STATE_WAIT_FOR_ACK: begin
                     if (ack_i) begin
+                        state <= STATE_WAIT;
                         stb <= 0;
                         cyc <= 0;
-                        state <= STATE_IDLE;
                     end
                 end
             endcase

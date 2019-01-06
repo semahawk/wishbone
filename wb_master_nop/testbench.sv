@@ -4,7 +4,6 @@ module wb_master_nop_tb ();
     reg ack_o;
     reg stb_i;
     reg cyc_i;
-    reg trigger_o;
     int i;
 
     wb_master_nop master_tb (
@@ -12,9 +11,7 @@ module wb_master_nop_tb ();
         .clk_i(clk_i),
         .cyc_o(cyc_i),
         .ack_i(ack_o),
-        .stb_o(stb_i),
-        // non-Wishbone signals
-        .trigger_i(trigger_o)
+        .stb_o(stb_i)
     );
 
     initial begin
@@ -24,28 +21,20 @@ module wb_master_nop_tb ();
         rst_i = 0;
         clk_i = 0;
         ack_o = 0;
-        trigger_o = 0;
 
-        #4;
+        for (i = 0; i < 16; i++) begin
+            $display("Waiting for phase start");
+            @(posedge stb_i);
 
-        trigger_o = 1;
+            $display("Responding with ACK");
 
-        $display("Waiting for STB to be asserted");
-        @(posedge stb_i);
+            ack_o = 1;
 
-        trigger_o = 0;
+            $display("Waiting for phase end");
+            @(negedge stb_i);
 
-        $display("Phase started - STB asserted");
-        $display("Responding with ACK");
-
-        ack_o = 1;
-
-        $display("Waiting for phase end");
-        @(negedge stb_i);
-
-        ack_o = 0;
-
-        #4;
+            ack_o = 0;
+        end
 
         $finish;
     end
