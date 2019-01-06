@@ -111,8 +111,9 @@ module wb_intercon (
     assign i2s_sel_o = m2i_sel_i[SEL_WIDTH*grant+:SEL_WIDTH];
     assign i2s_we_o = m2i_we_i[grant];
 
-    // distribute the ack signal coming back from the slave to the blessed master
+    // distribute the ack and err signals coming back from the slave to the blessed master
     assign i2m_ack_o = s2i_ack_i[selected_slave] << grant;
+    assign i2m_err_o = s2i_err_i[selected_slave] << grant;
     // distribute the output data of the selected slave to all masters
     assign i2m_dat_o = s2i_dat_i[DATA_WIDTH*selected_slave+:DATA_WIDTH];
 

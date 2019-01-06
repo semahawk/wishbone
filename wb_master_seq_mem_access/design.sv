@@ -109,6 +109,12 @@ module wb_master_seq_mem_access (
                         state <= STATE_WAIT_BEFORE_READ;
                         stb <= 0;
                         we_o <= 1'b0;
+                    end else if (err_i) begin
+                        // essentially retry
+                        state <= STATE_START;
+                        stb <= 0;
+                        cyc <= 0;
+                        we_o <= 1'b0;
                     end
                 end
                 STATE_WAIT_BEFORE_READ: begin

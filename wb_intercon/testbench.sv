@@ -48,6 +48,8 @@ module wb_intercon_tb ();
     wire [DATA_WIDTH-1:0] slave_dat_i;
     wire [7:0] slave_sel_i;
 
+    wire nc;
+
     wb_intercon #(
         .MASTERS_NUM(MASTERS_NUM),
         .SLAVES_NUM(SLAVES_NUM)
@@ -61,7 +63,7 @@ module wb_intercon_tb ();
         .m2i_dat_i({ m2_mem_dat_o, 32'h0000, 32'h0000 }),
         .m2i_sel_i({ 8'hff, 8'h00, 8'h00 }),
         .i2m_ack_o({ m2_mem_ack_i, m1_nop_ack_i, m0_nop_ack_i }),
-        .i2m_err_o(/* nc */),
+        .i2m_err_o({ m2_mem_err_i, nc, nc }),
         .i2m_dat_o(master_dat_i),
         .s2i_ack_i({ s2_reg_ack_o, s1_nop_ack_o, s0_nop_ack_o }),
         .s2i_err_i({ s2_reg_err_o, 1'b0, 1'b0 }),
