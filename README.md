@@ -36,3 +36,9 @@ over a range of memory address space (configurable via module parameters)
 [wb_intercon/](wb_intercon/)
 
 a simple round robin interconnect, supporting multiple masters and multiple slave devices
+
+### loopback
+
+[wb_loopback/](wb_loopback/)
+
+a simple device which has both a master and a slave interface, which means it can be loopbacked
