@@ -66,21 +66,45 @@ module wb_loopback (
 
     parameter INITIAL_DELAY = 2;
     parameter WAIT_CYCLES = 4;
+    parameter SLAVE_RESPONSE_WAIT_CYCLES = 4;
 
     import wb_loopback_pkg::*;
 
     master_state_t master_state = MASTER_STATE_WAIT;
     slave_state_t slave_state = SLAVE_STATE_WAIT;
     int wait_cycles = INITIAL_DELAY;
+    int slave_response_wait_cycles = SLAVE_RESPONSE_WAIT_CYCLES;
 
     // slave interface
-    assign ack_o = stb_i;
+    always @(posedge clk_i) begin
+        if (rst_i) begin
+            slave_state <= SLAVE_STATE_WAIT;
+            ack_o <= 1'b0;
+        end else begin
+            case (slave_state)
+                SLAVE_STATE_WAIT: begin
+                    if (stb_i) begin
+                        slave_state <= SLAVE_STATE_RESPOND;
+                        ack_o <= 1'b1;
+                    end
+                end
+                SLAVE_STATE_RESPOND: begin
+                    if (slave_response_wait_cycles == 0) begin
+                        slave_state <= SLAVE_STATE_WAIT;
+                        slave_response_wait_cycles <= SLAVE_RESPONSE_WAIT_CYCLES;
+                        ack_o <= 1'b0;
+                    end else begin
+                        slave_response_wait_cycles <= slave_response_wait_cycles - 1;
+                    end
+                end
+            endcase
+        end
+    end
 
     // master interface
     always @(posedge clk_i) begin
         if (rst_i) begin
             master_state <= MASTER_STATE_WAIT;
-            slave_state <= SLAVE_STATE_WAIT;
             stb_o <= 0;
             cyc_o <= 0;
             wait_cycles <= WAIT_CYCLES;
